@@ -1,0 +1,14 @@
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: placement-binding
+  namespace: policy-governance
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: placement
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: PolicySet
+    name: REPLACE

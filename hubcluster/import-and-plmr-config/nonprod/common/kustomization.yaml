@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/clustersets/
+
+namePrefix: nonprod-
+
+patches:
+  # Clusterset
+  - target:
+      kind: ManagedClusterSetBinding
+      name: clusterset
+    patch: |-
+      - op: add
+        path: /spec/clusterSet
+        value: nonprod-clusterset
+  - target:
+      kind: Placement
+      name: clusterset
+    patch: |-
+      - op: add
+        path: /spec/predicates/0/requiredClusterSelector/labelSelector/matchExpressions/0/values
+        value:
+          - nonprod-clusterset
+  - target:
+      kind: GitOpsCluster
+      name: acm-importer
+    patch: |-
+      - op: add
+        path: /spec/placementRef/name
+        value: nonprod-clusterset

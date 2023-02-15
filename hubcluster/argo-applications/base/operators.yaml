@@ -1,0 +1,27 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: operators
+  namespace: openshift-gitops
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Vikaspogu/acm-folder-structure.git
+        revision: master
+        directories:
+          - path: hubcluster/operators/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+    spec:
+      destination:
+        server: "https://kubernetes.default.svc"
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+      source:
+        path: "{{path}}"
+        repoURL: "https://github.com/Vikaspogu/acm-folder-structure.git"
+        targetRevision: "master"

@@ -1,0 +1,32 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nonprod-import-and-plmr-config
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Vikaspogu/acm-folder-structure.git
+        revision: master
+        directories:
+          - path: hubcluster/import-and-plmr-config/nonprod/*
+  template:
+    metadata:
+      name: 'nonprod-{{path.basename}}'
+    spec:
+      destination:
+        server: "https://kubernetes.default.svc"
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+      source:
+        path: "{{path}}"
+        repoURL: "https://github.com/Vikaspogu/acm-folder-structure.git"
+        targetRevision: "master"

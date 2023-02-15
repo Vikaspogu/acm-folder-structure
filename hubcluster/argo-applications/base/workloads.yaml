@@ -1,0 +1,33 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads
+  namespace: openshift-gitops
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/Vikaspogu/acm-folder-structure.git
+        revision: master
+        directories:
+          - path: hubcluster/workloads/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+    spec:
+      destination:
+        namespace: openshift-gitops
+        server: "https://kubernetes.default.svc"
+      project: default
+      ignoreDifferences:
+        - jsonPointers:
+            - /imagePullSecrets
+            - /secrets
+          kind: ServiceAccount
+      syncPolicy:
+        automated:
+          prune: true
+      source:
+        path: "{{path}}"
+        repoURL: "https://github.com/Vikaspogu/acm-folder-structure.git"
+        targetRevision: "master"

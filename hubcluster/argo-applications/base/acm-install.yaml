@@ -1,0 +1,30 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: acm-install
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "-25"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: hubcluster/acm/install
+    repoURL: "https://github.com/Vikaspogu/acm-folder-structure.git"
+    targetRevision: "master"
+  syncPolicy:
+    automated: {}
+    retry:
+      limit: 10
+      backoff:
+        duration: "120s"
+        factor: 5
+        maxDuration: "10m0s"
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

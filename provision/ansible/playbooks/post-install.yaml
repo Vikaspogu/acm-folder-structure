@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+    - name: Get root level directory
+      shell: "git rev-parse --show-toplevel"
+      register: root_dir
+
+    - name: Create hub cluster argocd application set
+      k8s:
+        validate_certs: false
+        definition: "{{ lookup('kubernetes.core.kustomize', dir='../../bootstrap/openshift-gitops/operator') }}"
+
+    - name: Pause for 1min
+      pause:
+        minutes: 1
+
+    - name: Wait until GitOps operator installation is succeeded
+      kubernetes.core.k8s_info:
+        validate_certs: false
+        api_version: operators.coreos.com/v1alpha1
+        kind: ClusterServiceVersion
+        namespace: openshift-gitops
+      register: csv_list
+      until: csv_list|json_query('resources[*].status.phase')|unique == ["Succeeded"]
+      retries: 30
+      delay: 60
+
+    - name: Create ArgoCD instance
+      k8s:
+        validate_certs: false
+        definition: "{{ lookup('kubernetes.core.kustomize', dir='../../bootstrap/openshift-gitops/instance') }}"
+
+    - name: Wait for all the pods to be ready in openshift-gitops namespace
+      kubernetes.core.k8s_info:
+        validate_certs: false
+        api_version: v1
+        kind: Pod
+        namespace: openshift-gitops
+      register: pod_list
+      until: pod_list|json_query('resources[*].status.phase')|unique == ["Running"]
+      retries: 30
+      delay: 30
+
+    - name: Create lab hubcluster app of apps
+      kubernetes.core.k8s:
+        validate_certs: false
+        state: present
+        definition: "{{ lookup('file', '../../../bootstrap/hubcluster-apps-of-apps/lab.yaml') | from_yaml }}"

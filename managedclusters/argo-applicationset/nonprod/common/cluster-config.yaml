@@ -1,0 +1,34 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: nonprod-common-cluster-config
+  namespace: openshift-gitops
+spec:
+  generators:
+    - matrix:
+        generators:
+          - clusterDecisionResource:
+              configMapRef: acm-placementrule
+              name: nonprod-common
+              requeueAfterSeconds: 3600
+          - git:
+              repoURL: https://github.com/Vikaspogu/acm-folder-structure.git
+              revision: master
+              directories:
+                - path: managedclusters/nonprod/common/cluster-config/*
+  template:
+    metadata:
+      name: 'nonprod-common-{{name}}-{{path.basename}}'
+    spec:
+      destination:
+        server: "{{server}}"
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+      source:
+        path: "{{path}}"
+        repoURL: "https://github.com/Vikaspogu/acm-folder-structure.git"
+        targetRevision: "master"

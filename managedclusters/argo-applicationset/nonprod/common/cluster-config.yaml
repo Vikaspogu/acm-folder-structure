@@ -9,8 +9,10 @@ spec:
     - matrix:
         generators:
           - clusterDecisionResource:
-              configMapRef: acm-placementrule
-              name: nonprod-common
+              configMapRef: acm-placement
+              labelSelector:
+                matchLabels:
+                  cluster.open-cluster-management.io/placement: nonprod-clusterset
               requeueAfterSeconds: 3600
           - git:
               repoURL: https://github.com/Vikaspogu/acm-folder-structure.git
